@@ -279,6 +279,22 @@
 
     .actions { display: flex; gap: 6px; white-space: nowrap; }
 
+    .btn-copy {
+      padding: 3px 8px;
+      border-radius: 5px;
+      border: none;
+      background: #252525;
+      color: #888;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      vertical-align: middle;
+      line-height: 1;
+    }
+
+    .btn-copy:hover { background: #333; color: #25f4ee; }
+    .btn-copy.copied { background: #1a3a1a; color: #4caf50; }
+
     .empty-state {
       text-align: center;
       padding: 48px 20px;
@@ -588,10 +604,14 @@
           <div class="username">${esc(a.name)}</div>
           ${a.note ? `<div style="font-size:.75rem;color:#666;margin-top:2px">${esc(a.note)}</div>` : ''}
         </td>
-        <td style="color:#25f4ee;font-weight:600">${esc(a.username)}</td>
+        <td>
+          <span style="color:#25f4ee;font-weight:600">${esc(a.username)}</span>
+          <button class="btn-copy" onclick="copyText('${esc(a.username)}','Username',this)" title="Copy username">📋</button>
+        </td>
         <td>
           <span class="pw-field" id="pw-${a.id}">••••••••</span>
-          <button class="btn btn-ghost btn-sm" style="margin-left:6px" onclick="toggleViewPw('${a.id}','${esc(a.password)}',this)">👁</button>
+          <button class="btn btn-ghost btn-sm" style="margin-left:4px" onclick="toggleViewPw('${a.id}','${esc(a.password)}',this)">👁</button>
+          <button class="btn-copy" onclick="copyText('${esc(a.password)}','Mật khẩu',this)" title="Copy mật khẩu">📋</button>
         </td>
         <td>${esc(a.email) || '<span style="color:#444">—</span>'}</td>
         <td>${esc(a.phone) || '<span style="color:#444">—</span>'}</td>
@@ -640,8 +660,8 @@
       <table style="width:100%;border-collapse:collapse">
         ${row('Khách hàng', a.name)}
         ${row('Điện thoại', a.phone || '—')}
-        ${row('TikTok Username', '<span style="color:#25f4ee;font-weight:700">' + esc(a.username) + '</span>')}
-        ${row('Mật khẩu', '<code style="background:#111;padding:4px 10px;border-radius:6px;color:#fe2c55;font-size:1rem">' + esc(a.password) + '</code>')}
+        ${row('TikTok Username', '<span style="color:#25f4ee;font-weight:700">' + esc(a.username) + '</span> <button class="btn-copy" onclick="copyText(\'' + esc(a.username) + '\',\'Username\',this)">📋 Copy</button>')}
+        ${row('Mật khẩu', '<code style="background:#111;padding:4px 10px;border-radius:6px;color:#fe2c55;font-size:1rem">' + esc(a.password) + '</code> <button class="btn-copy" onclick="copyText(\'' + esc(a.password) + '\',\'Mật khẩu\',this)">📋 Copy</button>')}
         ${row('Email', a.email || '—')}
         ${row('Trạng thái', '<span class="status-badge status-' + a.status + '">' + statusLabel(a.status) + '</span>')}
         ${a.note ? row('Ghi chú', a.note) : ''}
@@ -656,6 +676,30 @@
       <td style="padding:8px 0;color:#666;font-size:.8rem;white-space:nowrap;width:130px">${label}</td>
       <td style="padding:8px 0 8px 12px;color:#ddd">${val}</td>
     </tr>`;
+  }
+
+  // ── COPY TO CLIPBOARD ─────────────────────────
+  function copyText(text, label, btn) {
+    const original = btn.textContent;
+    const finish = () => {
+      toast('Đã copy ' + label + '!');
+      btn.textContent = original.includes('Copy') ? '✅ Copied' : '✅';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('copied');
+      }, 1800);
+    };
+    navigator.clipboard.writeText(text).then(finish).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      finish();
+    });
   }
 
   // ── INLINE PW TOGGLE ──────────────────────────
